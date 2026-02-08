@@ -1,44 +1,32 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slytherin Slots</title>
+    <script src="https://unpkg.com/@discord/embedded-app-sdk"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
 
-<style type="text/css">
-@media (max-width: 900px) { 
-img { 
-   max-width: 100%;
-   height: auto;
-}
+    <div class="container">
+        <div class="slot-machine">
+            <div class="reel"></div>
+            <div class="reel"></div>
+            <div class="reel"></div>
+        </div>
 
-.table-container {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-td, th {
-    padding: 8px;
-    text-align: left;
-    border: 1px solid #ddd;
-}
-}	
-
-</style>
-<div class="container">
-    <div class="slot-machine">
-        <div class="reel"></div>
-        <div class="reel"></div>
-        <div class="reel"></div>
+        <div class="right-side-panel">
+            <button id="increase-bet">+</button>
+            <button id="decrease-bet">-</button>
+            <div id="balance">Balance: 10</div>
+            <div id="bet">Bet: 0.50</div>
+            <button id="spin-button">Spin</button>
+            <button id="collect-button">Collect Free Credits</button>
+        </div>
+        <div id="result"></div>
     </div>
 
-    <div class="right-side-panel">
-        <button id="increase-bet">+</button>
-        <button id="decrease-bet">-</button>
-        <div id="balance">Balance: 10</div>
-        <div id="bet">Bet: 0.50</div>
-        <button id="spin-button">Spin</button>
-        <button id="collect-button">Collect Free Credits</button>
-    </div>
-    <div id="result"></div>
-</div>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"4581d6a58cf94e929fad52deda295622","r":1,"server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+    <script src="script.js"></script>
+</body>
+</html>
