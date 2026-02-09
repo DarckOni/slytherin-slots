@@ -3,202 +3,116 @@ const spinButton = document.getElementById('spin-button');
 const resultElement = document.getElementById('result');
 const balanceElement = document.getElementById('balance');
 const betElement = document.getElementById('bet');
-const increaseBetButton = document.getElementById('increase-bet');
-const decreaseBetButton = document.getElementById('decrease-bet');
-const gameContainer = document.getElementById('game-container');
-const collectButton = document.getElementById('collect-button');
+const paytable = document.getElementById('paytable');
 const spinningSound = new Audio('spinning_sound.mp3');
 
 const symbols = ['🍎', '🍌', '🍒', '🍇', '🍉', '🍋', '💎', '💰'];
 let balance = 10;
 let bet = 0.50;
-const minBet = 0.50;
-const maxBet = 1000;
-let collectAvailable = true;
-let collectTimeout;
 
-// Funcție pentru salvarea datelor jucătorului în localStorage
-function saveGameData(balance) {
-    localStorage.setItem('balance', balance.toString());
-}
-
-// Funcție pentru încărcarea datelor jucătorului din localStorage
-function loadGameData() {
-    const savedBalance = localStorage.getItem('balance');
-    if (savedBalance) {
-        balance = parseFloat(savedBalance);
-        balanceElement.textContent = `Balance: ${balance.toFixed(2)}`;
-    } else {
-        balance = 10;
-        balanceElement.textContent = `Balance: ${balance.toFixed(2)}`;
+function createMoneyRain() {
+    const coinSymbols = ['💰', '🪙', '💎', '💵', '✨'];
+    for (let i = 0; i < 50; i++) {
+        setTimeout(() => {
+            const coin = document.createElement('div');
+            coin.className = 'coin';
+            coin.textContent = coinSymbols[Math.floor(Math.random() * coinSymbols.length)];
+            coin.style.left = Math.random() * 100 + 'vw';
+            const duration = Math.random() * 2 + 2; 
+            coin.style.animationDuration = duration + 's';
+            document.body.appendChild(coin);
+            setTimeout(() => coin.remove(), duration * 1000);
+        }, i * 50);
     }
 }
 
-// Funcție pentru afișarea interfeței de joc și încărcarea datelor
-function showGameInterface() {
-    gameContainer.style.display = 'block';
-    loadGameData();
-    checkCollectAvailability();
-}
-
-// Funcție pentru a acorda creditele la colectare
-function collectCredits() {
-    if (collectAvailable) {
-        balance += 100;
-        balanceElement.textContent = `Balance: ${balance.toFixed(2)}`;
-        saveGameData(balance);
-        collectAvailable = false;
-        collectButton.disabled = true;
-        collectButton.textContent = "Collect (30:00)";
-
-        collectTimeout = setTimeout(() => {
-            collectAvailable = true;
-            collectButton.disabled = false;
-            collectButton.textContent = "Collect";
-        }, 30 * 60 * 1000);
-
-        let timeLeft = 30 * 60;
-        let timerInterval = setInterval(() => {
-            timeLeft--;
-            let minutes = Math.floor(timeLeft / 60);
-            let seconds = timeLeft % 60;
-            collectButton.textContent = `Collect (${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')})`;
-
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                collectButton.textContent = "Collect";
-            }
-        }, 1000);
-    }
-}
-
-// Funcție pentru a verifica dacă timpul a expirat și colectarea este disponibilă
-function checkCollectAvailability() {
-    if (collectTimeout) {
-        clearTimeout(collectTimeout);
-    }
-    collectAvailable = true;
-    collectButton.disabled = false;
-    collectButton.textContent = "Collect";
-}
-
-function increaseBet() {
-    bet = Math.min(bet + 0.50, maxBet);
-    betElement.textContent = `Bet: ${bet.toFixed(2)}`;
-}
-
-function decreaseBet() {
-    bet = Math.max(bet - 0.50, minBet);
-    betElement.textContent = `Bet: ${bet.toFixed(2)}`;
-}
-
-function spin() {
-    if (balance < bet) {
-        resultElement.textContent = "Not enough balance!";
-        return;
-    }
-
-    // Dezactivează butonul de spin
+async function spin() {
+    if (balance < bet) { resultElement.textContent = "Fără credit!"; return; }
+    
     spinButton.disabled = true;
-    spinButton.textContent = "Spinning..."; // Schimbă textul butonului
-
+    paytable.classList.remove('winning-glow'); // Reset glow la spin nou
     balance -= bet;
     balanceElement.textContent = `Balance: ${balance.toFixed(2)}`;
 
+    const willWin = Math.random() < 0.10; // 10% Rata de castig
     const results = [[], [], []];
-    const willWin = Math.random() < 0.20;
 
-    // Pornește sunetul de rotire
-    spinningSound.loop = true;
-    spinningSound.play().catch(error => {
-        console.error("Failed to play spinning sound:", error);
-    });
+    try { spinningSound.play(); spinningSound.loop = true; } catch(e) {}
 
-    for (let row = 0; row < 3; row++) {
-        for (let col = 0; col < 3; col++) {
-            results[row][col] = symbols[Math.floor(Math.random() * symbols.length)];
+    for (let r = 0; r < 3; r++) {
+        for (let c = 0; c < 3; c++) {
+            results[r][c] = symbols[Math.floor(Math.random() * symbols.length)];
         }
     }
 
-    async function spinReel(reel, index) {
+    if (willWin) {
+        const winSym = symbols[Math.floor(Math.random() * symbols.length)];
+        results[1][0] = winSym; results[1][1] = winSym; results[1][2] = winSym;
+    }
+
+    const spinReel = (reel, index) => {
         return new Promise(resolve => {
-            reel.innerHTML = '';
-            const reelInner = document.createElement('div');
-            reelInner.classList.add('reel-inner');
-            for (let i = 0; i < 50; i++) {
-                const symbol = document.createElement('div');
-                symbol.textContent = symbols[Math.floor(Math.random() * symbols.length)];
-                reelInner.appendChild(symbol);
+            reel.innerHTML = '<div class="reel-inner"></div>';
+            const inner = reel.querySelector('.reel-inner');
+            for (let i = 0; i < 20; i++) {
+                const s = document.createElement('div');
+                s.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+                s.className = 'result-symbol';
+                inner.appendChild(s);
             }
-            reel.appendChild(reelInner);
             reel.classList.add('spinning');
             setTimeout(() => {
                 reel.classList.remove('spinning');
                 reel.innerHTML = '';
                 for (let i = 0; i < 3; i++) {
-                    const symbol = document.createElement('div');
-                    symbol.textContent = results[i][index];
-                    symbol.style.top = `${i * 100}px`;
-                    symbol.classList.add('result-symbol');
-                    reel.appendChild(symbol);
+                    const s = document.createElement('div');
+                    s.textContent = results[i][index];
+                    s.className = 'result-symbol';
+                    reel.appendChild(s);
                 }
                 resolve();
-            }, 250 + index * 125);
+            }, 800 + index * 400);
         });
+    };
+
+    await spinReel(reels[0], 0);
+    await spinReel(reels[1], 1);
+    await spinReel(reels[2], 2);
+
+    spinningSound.pause();
+    spinningSound.currentTime = 0;
+
+    let winAmount = 0;
+    if (results[1][0] === results[1][1] && results[1][1] === results[1][2]) {
+        const sym = results[1][0];
+        winAmount = (sym === '💎') ? bet * 20 : (sym === '💰') ? bet * 10 : bet * 5;
     }
 
-    async function spinAllReels() {
-        for (let i = 0; i < reels.length; i++) {
-            await spinReel(reels[i], i);
-        }
-
-        let winnings = calculateWinnings(results);
-        balance += winnings;
-        balanceElement.textContent = `Balance: ${balance.toFixed(2)}`;
-
-        if (winnings > 0) {
-            resultElement.textContent = `You won ${winnings.toFixed(2)}!`;
-        } else {
-            resultElement.textContent = "You lost.";
-        }
-
-        saveGameData(balance);
-
-        // Oprește sunetul de rotire după ce rotirea este completă
-        spinningSound.pause();
-        spinningSound.currentTime = 0;
-
-        // Reactivează butonul de spin
-        spinButton.disabled = false;
-        spinButton.textContent = "Spin"; // Restaurează textul butonului
+    if (winAmount > 0) {
+        balance += winAmount;
+        resultElement.textContent = `CÂȘTIG: ${winAmount.toFixed(2)}`;
+        paytable.classList.add('winning-glow'); // Activează glow
+        createMoneyRain();
+    } else {
+        resultElement.textContent = "Mai încearcă!";
     }
 
-    function calculateWinnings(results) {
-        let winnings = 0;
-        if (willWin) {
-            const winningRow = Math.floor(Math.random() * 3);
-            const winningSymbol = symbols[Math.floor(Math.random() * symbols.length)];
-            results[winningRow][0] = winningSymbol;
-            results[winningRow][1] = winningSymbol;
-            results[winningRow][2] = winningSymbol;
-            if (winningSymbol === '💎') {
-                winnings += bet * 20;
-            } else {
-                winnings += bet * 5;
-            }
-        }
-        return winnings;
-    }
-
-    spinAllReels();
+    balanceElement.textContent = `Balance: ${balance.toFixed(2)}`;
+    localStorage.setItem('balance', balance.toString());
+    spinButton.disabled = false;
 }
 
-increaseBetButton.addEventListener('click', increaseBet);
-decreaseBetButton.addEventListener('click', decreaseBet);
+// Listeners (Bet, Collect, Spin)
+document.getElementById('increase-bet').addEventListener('click', () => { bet = Math.min(bet + 0.5, 1000); document.getElementById('bet').textContent = `Bet: ${bet.toFixed(2)}`; });
+document.getElementById('decrease-bet').addEventListener('click', () => { bet = Math.max(bet - 0.5, 0.5); document.getElementById('bet').textContent = `Bet: ${bet.toFixed(2)}`; });
+document.getElementById('collect-button').addEventListener('click', () => {
+    balance += 100;
+    balanceElement.textContent = `Balance: ${balance.toFixed(2)}`;
+    createMoneyRain();
+});
 spinButton.addEventListener('click', spin);
-collectButton.addEventListener('click', collectCredits);
-
-// Initializare
-window.addEventListener('load', function() {
-    showGameInterface();
+window.addEventListener('load', () => {
+    const saved = localStorage.getItem('balance');
+    balance = saved ? parseFloat(saved) : 10;
+    balanceElement.textContent = `Balance: ${balance.toFixed(2)}`;
 });
