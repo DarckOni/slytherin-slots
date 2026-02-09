@@ -1,5 +1,3 @@
-// script.js
-
 const reels = document.querySelectorAll('.reel');
 const spinButton = document.getElementById('spin-button');
 const resultElement = document.getElementById('result');
@@ -9,45 +7,41 @@ const increaseBetButton = document.getElementById('increase-bet');
 const decreaseBetButton = document.getElementById('decrease-bet');
 const gameContainer = document.getElementById('game-container');
 const collectButton = document.getElementById('collect-button');
-
-// --- DECLARARE SUNETE ---
-const audioSpin = new Audio('spin.mp3');
-const audioWin = new Audio('Castig.mp3');
-const audioBetUp = new Audio('Betup.mp3');
-const audioBetDown = new Audio('Betd.mp3');
-
-// Configurări audio
-audioSpin.loop = true; // Sunetul de spin va rula în buclă până la oprire
+const spinningSound = new Audio('spinning_sound.mp3');
 
 const symbols = ['🍎', '🍌', '🍒', '🍇', '🍉', '🍋', '💎', '💰'];
 let balance = 10;
 let bet = 0.50;
 const minBet = 0.50;
 const maxBet = 1000;
-let collectAvailable = true; 
-let collectTimeout; 
+let collectAvailable = true;
+let collectTimeout;
 
+// Funcție pentru salvarea datelor jucătorului în localStorage
 function saveGameData(balance) {
     localStorage.setItem('balance', balance.toString());
 }
 
+// Funcție pentru încărcarea datelor jucătorului din localStorage
 function loadGameData() {
     const savedBalance = localStorage.getItem('balance');
     if (savedBalance) {
         balance = parseFloat(savedBalance);
         balanceElement.textContent = `Balance: ${balance.toFixed(2)}`;
     } else {
-        balance = 10; 
+        balance = 10;
         balanceElement.textContent = `Balance: ${balance.toFixed(2)}`;
     }
 }
 
+// Funcție pentru afișarea interfeței de joc și încărcarea datelor
 function showGameInterface() {
     gameContainer.style.display = 'block';
     loadGameData();
     checkCollectAvailability();
 }
 
+// Funcție pentru a acorda creditele la colectare
 function collectCredits() {
     if (collectAvailable) {
         balance += 100;
@@ -63,7 +57,7 @@ function collectCredits() {
             collectButton.textContent = "Collect";
         }, 30 * 60 * 1000);
 
-        let timeLeft = 30 * 60; 
+        let timeLeft = 30 * 60;
         let timerInterval = setInterval(() => {
             timeLeft--;
             let minutes = Math.floor(timeLeft / 60);
@@ -78,6 +72,7 @@ function collectCredits() {
     }
 }
 
+// Funcție pentru a verifica dacă timpul a expirat și colectarea este disponibilă
 function checkCollectAvailability() {
     if (collectTimeout) {
         clearTimeout(collectTimeout);
@@ -87,23 +82,14 @@ function checkCollectAvailability() {
     collectButton.textContent = "Collect";
 }
 
-// --- MODIFICARE PARIURI CU SUNET ---
 function increaseBet() {
-    if (bet < maxBet) {
-        audioBetUp.currentTime = 0;
-        audioBetUp.play();
-        bet = Math.min(bet + 0.50, maxBet);
-        betElement.textContent = `Bet: ${bet.toFixed(2)}`;
-    }
+    bet = Math.min(bet + 0.50, maxBet);
+    betElement.textContent = `Bet: ${bet.toFixed(2)}`;
 }
 
 function decreaseBet() {
-    if (bet > minBet) {
-        audioBetDown.currentTime = 0;
-        audioBetDown.play();
-        bet = Math.max(bet - 0.50, minBet);
-        betElement.textContent = `Bet: ${bet.toFixed(2)}`;
-    }
+    bet = Math.max(bet - 0.50, minBet);
+    betElement.textContent = `Bet: ${bet.toFixed(2)}`;
 }
 
 function spin() {
@@ -112,15 +98,21 @@ function spin() {
         return;
     }
 
-    // Start sunet SPIN
-    audioSpin.currentTime = 0;
-    audioSpin.play();
+    // Dezactivează butonul de spin
+    spinButton.disabled = true;
+    spinButton.textContent = "Spinning..."; // Schimbă textul butonului
 
     balance -= bet;
     balanceElement.textContent = `Balance: ${balance.toFixed(2)}`;
 
     const results = [[], [], []];
-    const willWin = Math.random() < 0.20; 
+    const willWin = Math.random() < 0.20;
+
+    // Pornește sunetul de rotire
+    spinningSound.loop = true;
+    spinningSound.play().catch(error => {
+        console.error("Failed to play spinning sound:", error);
+    });
 
     for (let row = 0; row < 3; row++) {
         for (let col = 0; col < 3; col++) {
@@ -160,23 +152,25 @@ function spin() {
             await spinReel(reels[i], i);
         }
 
-        // --- OPRIRE SUNET SPIN ---
-        audioSpin.pause();
-
         let winnings = calculateWinnings(results);
         balance += winnings;
         balanceElement.textContent = `Balance: ${balance.toFixed(2)}`;
 
         if (winnings > 0) {
             resultElement.textContent = `You won ${winnings.toFixed(2)}!`;
-            // --- REDARE SUNET CÂȘTIG ---
-            audioWin.currentTime = 0;
-            audioWin.play();
         } else {
             resultElement.textContent = "You lost.";
         }
 
         saveGameData(balance);
+
+        // Oprește sunetul de rotire după ce rotirea este completă
+        spinningSound.pause();
+        spinningSound.currentTime = 0;
+
+        // Reactivează butonul de spin
+        spinButton.disabled = false;
+        spinButton.textContent = "Spin"; // Restaurează textul butonului
     }
 
     function calculateWinnings(results) {
@@ -190,11 +184,12 @@ function spin() {
             if (winningSymbol === '💎') {
                 winnings += bet * 20;
             } else {
-                winnings += bet * 5; 
+                winnings += bet * 5;
             }
         }
         return winnings;
     }
+
     spinAllReels();
 }
 
@@ -203,6 +198,7 @@ decreaseBetButton.addEventListener('click', decreaseBet);
 spinButton.addEventListener('click', spin);
 collectButton.addEventListener('click', collectCredits);
 
+// Initializare
 window.addEventListener('load', function() {
     showGameInterface();
 });
