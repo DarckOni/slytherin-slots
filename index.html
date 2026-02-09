@@ -3,30 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slytherin Slots</title>
+    <title>Slytherin Summer Slots</title>
     <script src="https://unpkg.com/@discord/embedded-app-sdk"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
     <div class="container">
-        <div class="slot-machine">
-            <div class="reel"></div>
-            <div class="reel"></div>
-            <div class="reel"></div>
+        <div id="game-container">
+            <div class="slot-machine">
+                <div class="reel"></div>
+                <div class="reel"></div>
+                <div class="reel"></div>
+            </div>
+
+            <div class="main-controls">
+                <div class="bet-area">
+                    <button id="decrease-bet">-</button>
+                    <div id="bet">Bet: 0.50</div>
+                    <button id="increase-bet">+</button>
+                </div>
+                
+                <div id="balance">Balance: 10.00</div>
+                <button id="spin-button">Spin</button>
+                <button id="collect-button">Collect</button>
+                <div id="result"></div>
+            </div>
         </div>
 
-        <div class="right-side-panel">
-            <button id="increase-bet">+</button>
-            <button id="decrease-bet">-</button>
-            <div id="balance">Balance: 10</div>
-            <div id="bet">Bet: 0.50</div>
-            <button id="spin-button">Spin</button>
-            <button id="collect-button">Collect Free Credits</button>
-        </div>
-        <div id="result"></div>
+       <div id="paytable">
+    <h3>TABEL CÂȘTIGURI</h3>
+    <div class="pay-row"><span>💎💎💎</span> <span>x20</span></div>
+    <div class="pay-row"><span>💰💰💰</span> <span>x10</span></div>
+    <div class="pay-row"><span>🍎🍎🍎</span> <span>x5</span></div>
+    <div class="pay-row"><span>🍉🍉🍉</span> <span>x5</span></div>
+    <div class="pay-row"><span>🍇🍇🍇</span> <span>x5</span></div>
+    <div class="pay-row"><span>🍋🍋🍋</span> <span>x5</span></div>
+    <div class="pay-row"><span>🍌🍌🍌</span> <span>x5</span></div>
+    <div class="pay-row"><span>🍒🍒🍒</span> <span>x5</span></div>
+    <p class="info">*Toate plățile se calculează: Miza x Multiplicator.</p>
+</div>
     </div>
-
     <script src="script.js"></script>
 </body>
 </html>
