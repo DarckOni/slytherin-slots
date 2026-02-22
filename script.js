@@ -63,44 +63,63 @@ collectBtn.addEventListener('click', () => {
 });
 
 // LOGICA SPIN
+// ... (păstrează variabilele de sus neschimbate până la funcția spin)
+
 async function spin() {
-    if (balance < bet) { resultElement.textContent = "No funds!"; return; }
+    if (balance < bet) { 
+        resultElement.textContent = "No funds!"; 
+        return; 
+    }
     
     spinButton.disabled = true;
     paytable.classList.remove('winning-glow');
     balance -= bet;
     saveGame();
 
-    const willWin = Math.random() < 0.10; // RATA 10%
+    const willWin = Math.random() < 0.15; // Am crescut puțin rata la 15% fiind 3 linii
     const results = [[], [], []];
 
-    try { spinningSound.play(); spinningSound.loop = true; } catch(e) {}
+    try { 
+        spinningSound.play(); 
+        spinningSound.loop = true; 
+    } catch(e) {}
 
+    // 1. GENERARE SIMBOLURI ALEATORII
     for (let r = 0; r < 3; r++) {
         for (let c = 0; c < 3; c++) {
             results[r][c] = symbols[Math.floor(Math.random() * symbols.length)];
         }
     }
 
+    // 2. LOGICA DE CÂȘTIG FORȚAT (pe o linie aleatorie din cele 3)
     if (willWin) {
         const winSym = symbols[Math.floor(Math.random() * symbols.length)];
-        results[1][0] = winSym; results[1][1] = winSym; results[1][2] = winSym;
+        const luckyRow = Math.floor(Math.random() * 3); // Alege rândul 0, 1 sau 2
+        results[luckyRow][0] = winSym; 
+        results[luckyRow][1] = winSym; 
+        results[luckyRow][2] = winSym;
     }
 
     const spinReel = (reel, index) => {
         return new Promise(resolve => {
             reel.innerHTML = '<div class="reel-inner"></div>';
             const inner = reel.querySelector('.reel-inner');
+            
+            // Creăm animația de "blur" cu simboluri random
             for (let i = 0; i < 20; i++) {
                 const s = document.createElement('div');
                 s.textContent = symbols[Math.floor(Math.random() * symbols.length)];
                 s.className = 'result-symbol';
                 inner.appendChild(s);
             }
+
             reel.classList.add('spinning');
+
+            // Timpul de oprire (decalat ușor pentru efect vizual, dar pornit simultan)
             setTimeout(() => {
                 reel.classList.remove('spinning');
                 reel.innerHTML = '';
+                // Afișăm toate cele 3 rânduri pe coloana curentă
                 for (let i = 0; i < 3; i++) {
                     const s = document.createElement('div');
                     s.textContent = results[i][index];
@@ -108,35 +127,48 @@ async function spin() {
                     reel.appendChild(s);
                 }
                 resolve();
-            }, 800 + index * 400);
+            }, 1000 + index * 300); 
         });
     };
 
-    await spinReel(reels[0], 0);
-    await spinReel(reels[1], 1);
-    await spinReel(reels[2], 2);
+    // 3. PORNIRE SIMULTANĂ (Rezolvă problema timpului de așteptare)
+    await Promise.all([
+        spinReel(reels[0], 0),
+        spinReel(reels[1], 1),
+        spinReel(reels[2], 2)
+    ]);
 
     spinningSound.pause();
     spinningSound.currentTime = 0;
 
-    let win = 0;
-    if (results[1][0] === results[1][1] && results[1][1] === results[1][2]) {
-        const s = results[1][0];
-        win = (s === '💎') ? bet * 20 : (s === '💰') ? bet * 10 : bet * 5;
+    // 4. CALCULARE CÂȘTIG PE TOATE CELE 3 LINII
+    let totalWin = 0;
+    let wonAnyLine = false;
+
+    for (let r = 0; r < 3; r++) {
+        if (results[r][0] === results[r][1] && results[r][1] === results[r][2]) {
+            const s = results[r][0];
+            let rowWin = (s === '💎') ? bet * 20 : (s === '💰') ? bet * 10 : bet * 5;
+            totalWin += rowWin;
+            wonAnyLine = true;
+        }
     }
 
-    if (win > 0) {
-        balance += win;
-        resultElement.textContent = `WIN: ${win.toFixed(2)}`;
+    // 5. FINALIZARE ȘI AFISARE
+    if (wonAnyLine) {
+        balance += totalWin;
+        resultElement.textContent = `WIN TOTAL: ${totalWin.toFixed(2)}`;
         paytable.classList.add('winning-glow');
         createMoneyRain();
     } else {
         resultElement.textContent = "Try again!";
     }
+
     saveGame();
     spinButton.disabled = false;
 }
 
+// ... (Restul codului pentru saveGame, listeners etc. rămâne identic)
 function saveGame() {
     balanceElement.textContent = `Balance: ${balance.toFixed(2)}`;
     localStorage.setItem('balance', balance.toString());
